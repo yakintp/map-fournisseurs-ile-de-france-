@@ -22,16 +22,23 @@
             line-height: 22px; 
             max-height: 500px; 
             overflow-y: auto; 
-            width: 240px; 
+            width: 260px; 
             font-size: 11px;
         }
-        .legend b.title { font-size: 12px; display: block; margin-bottom: 8px; border-bottom: 2px solid #eee; color: #2c3e50; line-height: 1.4; }
+        /* MODIFICATION : Titre G1 et G2 en rouge */
+        .legend b.title { 
+            font-size: 12px; 
+            display: block; 
+            margin-bottom: 8px; 
+            border-bottom: 2px solid #eee; 
+            color: red; 
+            line-height: 1.4; 
+        }
         .legend span { cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 3px 5px; border-radius: 3px; font-weight: bold; }
         .legend span:hover { background: #f0f0f0; }
 
-        /* Styles pour les logos de la légende */
         .legend-logo { width: 20px; height: 20px; object-fit: contain; border-radius: 2px; background: white; border: 1px solid #f0f0f0; }
-        .legend-color-box { display: inline-block; width: 18px; height: 18px; border-radius: 2px; }
+        .legend-color-box { display: inline-block; width: 16px; height: 16px; border-radius: 3px; border: 1px solid #999; }
     </style>
 </head>
 <body>
@@ -48,7 +55,7 @@
     <select id="filtreProduit" onchange="filtrer()"><option value="">Produit : Tous</option></select>
 
     <div class="range-box">
-        Rayon : <input type="range" id="filtreRayon" min="0" max="200" value="0" oninput="document.getElementById('rayonVal').innerText = this.value; filtrer();">
+        Rayon : <input type="range" id="filtreRayon" min="0" max="50" value="0" oninput="document.getElementById('rayonVal').innerText = this.value; filtrer();">
         <span id="rayonVal">0</span> km
     </div>
 
@@ -83,7 +90,6 @@ var codesCouleurs = {
     "UTD": "#145a32", "VIACOV": "#7b241c", "YPREMA": "#212f3c", "Cemex": "#5D6D7E"
 };
 
-// --- CONFIGURATION DES LOGOS ---
 var logosMap = {
     "Loxam": "https://loxam.com/wp-content/uploads/2022/08/logo-loxam-rental.png",
     "Point P": "Point P.png",
@@ -108,7 +114,8 @@ var logosMap = {
 
 var leafletIconMap = {
     "#003399": "blue", "#cc0000": "red", "#006600": "green", "#000000": "black",
-    "#424949": "grey", "#7d3c98": "violet", "#af601a": "orange", "#7e5109": "yellow"
+    "#424949": "grey", "#7d3c98": "violet", "#af601a": "orange", "#7e5109": "yellow",
+    "#1a5276": "blue", "#922b21": "red", "#1d8348": "green", "#212f3d": "black"
 };
 
 function getIcon(hex) {
@@ -172,8 +179,7 @@ fetch("data.csv")
                             <b>Pays :</b> ${row["Pays"] || ""}<br>
                             <b>Produit :</b> ${p}<br>
                             <b>Email :</b> <a href="mailto:${row["Email"]}">${row["Email"] || ""}</a>
-                        </div>
-                    `;
+                        </div>`;
 
                     let m = L.marker([latF, lngF], { icon: getIcon(hex) })
                              .bindPopup(popupContent);
@@ -202,13 +208,13 @@ function remplirSelect(id, set, label) {
 }
 
 function ajouterLegendes() {
-    var listeGauche = [
+    var listeG2 = [
         "Point P", "Raboni", "CAUPAMAT CADENZ", "Tersen", "pum", "YPREMA", 
         "Fransbonhomme", "SODEXTRA", "SPME", "Bouvelot TP", "SNB", 
         "EVA INDUSTRIES", "LM DISTRIBUTION", "IDF MARQUAGE", "EUROPIERRE"
     ];
 
-    var listeDroite = [
+    var listeG1 = [
         "Loxam", "Cemex", "BSM", "COLBER", "SOL 78", "VIACOV", 
         "CHEUTIN", "GO POMPE", "EVO LOCATION", "UTD", 
         "SCIABBARRASI RENT", "RFM", "ATPL CASELAS"
@@ -218,9 +224,8 @@ function ajouterLegendes() {
         var span = document.createElement("span");
         let iconHtml = "";
         
-        // Si un logo existe dans logosMap, on l'affiche, sinon carré de couleur
         if (logosMap[f]) {
-            iconHtml = `<img src="${logosMap[f]}" class="legend-logo" onerror="this.style.display='none'">`;
+            iconHtml = `<img src="${logosMap[f]}" class="legend-logo" onerror="this.outerHTML='<div class=\'legend-color-box\' style=\'background:${codesCouleurs[f]}\'></div>'">`;
         } else {
             iconHtml = `<div class="legend-color-box" style="background:${codesCouleurs[f] || '#ccc'}"></div>`;
         }
@@ -233,11 +238,9 @@ function ajouterLegendes() {
     var legendLeft = L.control({position: 'bottomleft'});
     legendLeft.onAdd = function() {
         var div = L.DomUtil.create('div', 'legend');
-        div.innerHTML = `<b class="title">G2 : Fournitures / Marquage / Balisage</b>`;
-        Object.keys(codesCouleurs).sort().forEach(f => {
-            if (listeGauche.includes(f)) {
-                div.appendChild(createLegendItem(f));
-            }
+        div.innerHTML = `<b class="title">G2 : Fournitures / Marquage / Balisage / Matériel</b>`;
+        listeG2.sort().forEach(f => {
+            if (codesCouleurs[f]) div.appendChild(createLegendItem(f));
         });
         return div;
     };
@@ -246,11 +249,9 @@ function ajouterLegendes() {
     var legendRight = L.control({position: 'bottomright'});
     legendRight.onAdd = function() {
         var div = L.DomUtil.create('div', 'legend');
-        div.innerHTML = `<b class="title">G1 : Engins / Recyclage</b>`;
-        Object.keys(codesCouleurs).sort().forEach(f => {
-            if (listeDroite.includes(f)) {
-                div.appendChild(createLegendItem(f));
-            }
+        div.innerHTML = `<b class="title">G1 : Engins grands / petits & Recyclage</b>`;
+        listeG1.sort().forEach(f => {
+            if (codesCouleurs[f]) div.appendChild(createLegendItem(f));
         });
         return div;
     };
